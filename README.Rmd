@@ -1,0 +1,141 @@
+---
+title: "hw2"
+output: github_document
+date: "2022-10-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+library(dplyr)
+library(nycflights13)
+library(ggplot2)
+library(sjmisc)
+```
+
+## [My Github](https://github.com/jlyu37/stat433_HW2)
+
+## What time of day should you fly if you want to avoid delays as much as possible?
+
+> Around **7** am in the morning. \
+
+> Around **September** during the whole year \
+
+> Depart from **LGA** \
+
+> Take **N363NB**
+
+### by time of day
+
+```{r cars}
+ques1 = flights %>% 
+  mutate(adelay = if_else(condition = arr_delay > 0,
+                                    true = T,
+                                    false = F,
+                                    missing = T),
+         ddelay = if_else(condition = dep_delay > 0,
+                                    true = T,
+                                    false = F,
+                                    missing = T),
+         delay = adelay | ddelay)
+
+by_hour = ques1 %>%
+  group_by(hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_hour %>%
+  arrange(delay_rate) %>%
+  head(30)
+
+by_hour %>%
+  ggplot(aes(x = hour, y = delay_rate, label = delay_rate)) +
+  geom_line() +
+  geom_point() +
+  geom_text(aes(label = ifelse(hour == 7, format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  labs(title = "The rate of delay during different time period", x = "24 hours", y = "rate of delay")
+```
+
+### by month of year
+
+```{r}
+by_month = ques1 %>%
+  group_by(month) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_month %>%
+  arrange(delay_rate) %>%
+  head(30)
+
+by_month %>%
+  ggplot(aes(x = month, y = delay_rate, label = delay_rate)) +
+  geom_line() +
+  geom_point() +
+  geom_text(aes(label = ifelse(month == 9, format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  geom_text(aes(label = month),hjust=1.5, vjust=0, color = "blue") +
+  labs(title = "The rate of delay during different months", x = "12 months", y = "rate of delay")
+  
+by_month2 = ques1 %>%
+  group_by(month, hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_month2 %>%
+  arrange(delay_rate) %>%
+  head(30)
+```
+
+### by origin
+
+```{r}
+by_origin = ques1 %>%
+  group_by(origin) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_origin %>%
+  arrange(delay_rate) %>%
+  head(3)
+
+by_origin %>%
+  ggplot(aes(x = origin, y = delay_rate, label = delay_rate)) +
+  geom_point() +
+  geom_text(aes(label = ifelse(origin == "LGA", format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  geom_text(aes(label = origin),hjust=1.5, vjust=0, color = "blue") +
+  labs(title = "The rate of delay during different origins", x = "origins", y = "rate of delay")
+  
+by_origin2 = ques1 %>%
+  group_by(origin, hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_origin2 %>%
+  arrange(delay_rate) %>%
+  head(30)
+```
+
+### by Tailnum
+
+```{r}
+by_tailnum = ques1 %>%
+  group_by(tailnum) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+med = mean(by_tailnum$n)
+by_tailnum %>%
+  filter(n > med) %>%
+  arrange(delay_rate) %>%
+  head(30)
+
+by_tailnum %>%
+  ggplot(aes(x = tailnum, y = delay_rate, label = delay_rate)) +
+  geom_point() +
+  geom_text(aes(label = ifelse(tailnum == "N363NB", format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  geom_point(aes(x = "N363NB", y = 0.2558140),colour="red") +
+  labs(title = "The rate of delay during different flights", x = "tailnum", y = "rate of delay")
+  
+by_tailnum2 = ques1 %>%
+  group_by(tailnum, hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_tailnum2 %>%
+  filter(n > 10 & !is.na(tailnum)) %>%
+  arrange(delay_rate) %>%
+  head(30)
+```

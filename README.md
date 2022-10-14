@@ -18,6 +18,7 @@ hw2
 
 ``` r
 ques1 = flights %>% 
+  left_join(weather) %>%
   mutate(adelay = if_else(condition = arr_delay > 0,
                                     true = T,
                                     false = F,
@@ -27,7 +28,11 @@ ques1 = flights %>%
                                     false = F,
                                     missing = T),
          delay = adelay | ddelay)
+```
 
+    ## Joining, by = c("year", "month", "day", "origin", "hour", "time_hour")
+
+``` r
 by_hour = ques1 %>%
   group_by(hour) %>% 
   summarise(number = sum(delay), n = n(), delay_rate = number/n)
@@ -276,4 +281,83 @@ by_tailnum2 %>%
     ##  8 N613JB     10      0    12          0
     ##  9 N717TW     10      0    15          0
     ## 10 N723UW      6      0    11          0
+    ## # … with 20 more rows
+
+### by wind speed
+
+``` r
+by_wind_speed = ques1 %>%
+  group_by(wind_speed) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_wind_speed %>%
+  arrange(delay_rate) %>%
+  head(30)
+```
+
+    ## # A tibble: 30 × 4
+    ##    wind_speed number     n delay_rate
+    ##         <dbl>  <int> <int>      <dbl>
+    ##  1       0      5480 11885      0.461
+    ##  2       5.75  10679 22189      0.481
+    ##  3       3.45   5625 11604      0.485
+    ##  4       4.60   8714 17883      0.487
+    ##  5      36.8      16    32      0.5  
+    ##  6       6.90  13190 26191      0.504
+    ##  7       9.21  15530 30405      0.511
+    ##  8      11.5   14408 27836      0.518
+    ##  9      10.4   14141 27191      0.520
+    ## 10       8.06  15143 29021      0.522
+    ## # … with 20 more rows
+
+``` r
+by_wind_speed %>%
+  ggplot(aes(x = wind_speed, y = delay_rate, label = delay_rate)) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  geom_text(aes(label = ifelse(wind_speed == 0  , format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  geom_point(aes(x = 0, y = 0.4610854),colour="red") +
+  labs(title = "The rate of delay during different wind speed", x = "wind_speed", y = "rate of delay")
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 1 rows containing missing values (geom_point).
+
+    ## Warning: Removed 1 rows containing missing values (geom_text).
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+by_wind_speed2 = ques1 %>%
+  group_by(wind_speed, hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+```
+
+    ## `summarise()` has grouped output by 'wind_speed'. You can override using the
+    ## `.groups` argument.
+
+``` r
+by_wind_speed2 %>%
+  filter(!is.na(wind_speed)) %>%
+  arrange(delay_rate) %>%
+  head(30)
+```
+
+    ## # A tibble: 30 × 5
+    ## # Groups:   wind_speed [15]
+    ##    wind_speed  hour number     n delay_rate
+    ##         <dbl> <dbl>  <int> <int>      <dbl>
+    ##  1       23.0     5      0     9      0    
+    ##  2       31.1    20      0     7      0    
+    ##  3       31.1    23      0     2      0    
+    ##  4       29.9    15      2    16      0.125
+    ##  5       29.9    18      1     8      0.125
+    ##  6       25.3     5      1     5      0.2  
+    ##  7       26.5     5      1     4      0.25 
+    ##  8       17.3     7     83   301      0.276
+    ##  9       25.3     7     29   102      0.284
+    ## 10       24.2    22      4    14      0.286
     ## # … with 20 more rows

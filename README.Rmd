@@ -29,7 +29,7 @@ library(sjmisc)
 
 ```{r cars}
 ques1 = flights %>% 
-  full_join(weather) %>%
+  left_join(weather) %>%
   mutate(adelay = if_else(condition = arr_delay > 0,
                                     true = T,
                                     false = F,
@@ -157,7 +157,7 @@ by_wind_speed %>%
   geom_point() +
   geom_smooth(method=lm) +
   geom_text(aes(label = ifelse(wind_speed == 0	, format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
-  geom_point(aes(x = 0, y = 0.4837176),colour="red") +
+  geom_point(aes(x = 0, y = 0.4610854),colour="red") +
   labs(title = "The rate of delay during different wind speed", x = "wind_speed", y = "rate of delay")
   
 by_wind_speed2 = ques1 %>%

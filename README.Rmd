@@ -1,6 +1,6 @@
 ---
 title: "hw2"
-output: github_document
+output: html_document
 date: "2022-10-11"
 ---
 
@@ -29,6 +29,7 @@ library(sjmisc)
 
 ```{r cars}
 ques1 = flights %>% 
+  full_join(weather) %>%
   mutate(adelay = if_else(condition = arr_delay > 0,
                                     true = T,
                                     false = F,
@@ -136,6 +137,35 @@ by_tailnum2 = ques1 %>%
 
 by_tailnum2 %>%
   filter(n > 10 & !is.na(tailnum)) %>%
+  arrange(delay_rate) %>%
+  head(30)
+```
+
+### by wind speed
+
+```{r}
+by_wind_speed = ques1 %>%
+  group_by(wind_speed) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_wind_speed %>%
+  arrange(delay_rate) %>%
+  head(30)
+
+by_wind_speed %>%
+  ggplot(aes(x = wind_speed, y = delay_rate, label = delay_rate)) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  geom_text(aes(label = ifelse(wind_speed == 0	, format(round(delay_rate, 3), nsmall = 3), '')),hjust=0, vjust=0, color = "red") +
+  geom_point(aes(x = 0, y = 0.4837176),colour="red") +
+  labs(title = "The rate of delay during different wind speed", x = "wind_speed", y = "rate of delay")
+  
+by_wind_speed2 = ques1 %>%
+  group_by(wind_speed, hour) %>% 
+  summarise(number = sum(delay), n = n(), delay_rate = number/n)
+
+by_wind_speed2 %>%
+  filter(!is.na(wind_speed)) %>%
   arrange(delay_rate) %>%
   head(30)
 ```
